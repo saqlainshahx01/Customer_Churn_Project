@@ -1,64 +1,22 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime
 from sqlalchemy.sql import func
 
-from database import Base
-
+from backend.database import Base
 
 class Customer(Base):
 
     __tablename__ = "customers"
 
-    # =========================
-    # Primary Key
-    # =========================
 
-    id = Column(
-        Integer,
-        primary_key=True,
-        index=True
-    )
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    customer_id = Column(String(50), unique=True, nullable=False, index=True)
+    recency = Column(Float, nullable=False)
+    frequency = Column(Float, nullable=False)
+    monetary = Column(Float, nullable=False)
+    total_quantity = Column(Float, nullable=False)
+    unique_products = Column(Float, nullable=False)
 
-    # Customer Information
-
-    customer_id = Column(
-        String(50),
-        unique=True,
-        nullable=False,
-        index=True
-    )
-
-    country = Column(
-        String(100),
-        nullable=True
-    )
-
-
-    # ML Features
-
-    recency = Column(
-        Float,
-        nullable=False
-    )
-
-    frequency = Column(
-        Float,
-        nullable=False
-    )
-
-    monetary = Column(
-        Float,
-        nullable=False
-    )
-
-    total_quantity = Column(
-        Float,
-        nullable=False
-    )
-
-    unique_products = Column(
-        Float,
-        nullable=False
-    )
+    country = Column(String(100), nullable=True)
 
     # Timestamps
 
