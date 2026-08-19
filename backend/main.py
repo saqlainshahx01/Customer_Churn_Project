@@ -7,8 +7,11 @@ from backend.schemas import (
     CustomerResponse,
     UserCreate,
     UserResponse,
-    LoginRequest
+    LoginRequest,
+    PredictionRequest,
+    PredictionResponse
 )
+from backend.ml_prediction import predict_customer
 
 from backend.crud import (
     create_customer,
@@ -24,7 +27,7 @@ from backend.utils import (
     verify_password
 )
 
-from backend.auth import create_token
+from backend.auth import create_token ,verify_token 
 
 Base.metadata.create_all(bind=engine)
 
@@ -45,7 +48,9 @@ def root():
 )
 def add_customer(
     customer: CustomerCreate,
-    db: Session = Depends(get_db)):
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(verify_token)
+):
 
     return create_customer(db,customer)
 
@@ -54,7 +59,8 @@ def add_customer(
     response_model=list[CustomerResponse]
 )
 def read_customers(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(verify_token)
 ):
 
     return get_customers(db)
@@ -66,7 +72,8 @@ def read_customers(
 )
 def read_customer(
     customer_id: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(verify_token)  
 ):
 
     customer = get_customer(
@@ -90,7 +97,8 @@ def read_customer(
 def edit_customer(
     customer_id: str,
     customer_data: CustomerCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(verify_token)
 ):
 
     customer = update_customer(
@@ -114,7 +122,8 @@ def edit_customer(
 )
 def remove_customer(
     customer_id: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(verify_token)  
 ):
 
     customer = delete_customer(
@@ -133,13 +142,49 @@ def remove_customer(
         "message": "Customer deleted successfully"
     }
 
+@app.post("/predict",response_model=PredictionResponse)
+def predict_new_customer(data: PredictionRequest,current_user: dict = Depends(verify_token)):
+
+    result = predict_customer(
+        recency=data.recency,
+        frequency=data.frequency,
+        monetary=data.monetary,
+        total_quantity=data.total_quantity,
+        unique_products=data.unique_products
+    )
+
+    return result 
+
+@app.get("/customers/{customer_id}/predict",response_model=PredictionResponse)
+def predict_existing_customer(customer_id: str,db: Session = Depends(get_db),current_user: dict = Depends(verify_token)):
+
+    customer = get_customer(db,customer_id)
+
+    if not customer:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Customer not found"
+        )
+
+    result = predict_customer(
+        recency=customer.recency,
+        frequency=customer.frequency,
+        monetary=customer.monetary,
+        total_quantity=customer.total_quantity,
+        unique_products=customer.unique_products
+    )
+
+    return result   
+
 @app.post(
     "/auth/signup",
     response_model=UserResponse
 )
 def signup(
     user: UserCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+
 ):
 
     existing_user = get_user_by_username(
