@@ -47,3 +47,18 @@ class LoginRequest(BaseModel):
 
     username: str
     password: str
+
+
+class PredictionRequest(BaseModel):
+    recency: float
+    frequency: float
+    monetary: float
+    total_quantity: float
+    unique_products: float
+
+
+class PredictionResponse(BaseModel):
+    cluster: int
+    segment: str
+    churn_prediction: int
+    churn_probability: float    
